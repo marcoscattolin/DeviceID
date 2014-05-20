@@ -11,7 +11,7 @@ setHeap <- function(data){
 intersection <- function(group1,group2){
         x <- is.element(group1$device, group2$device)
         y <- is.element(group1$user, group2$user)
-        x|y
+        sum(x)|sum(y)
 }
 mergeGroup <- function(groupList,i,j){
         x <- union(groupList[[i]]$device, groupList[[j]]$device)
@@ -20,37 +20,50 @@ mergeGroup <- function(groupList,i,j){
         groupList[[i]]$user <- y
         groupList[[i]]
 }
-
-
-
-#generate data
-a <- 1:20
-dev <- paste0("Dev",a)
-user <- paste0("Usr",a)
-set.seed(123)
-dev <- sample(dev,50, replace=T)
-user <- sample(user,50, replace=T)
-data <- data.frame(dev,user)
-
-groupList <- setHeap(data)
-newGroupList <- groupList
-
-mergers <- 1
-while(mergers > 0){
-        mergers = 0
-        for (i in 1:(length(groupList)-1)){
-                for (j in (i+1):length(groupList)){
-                        inters <- intersection(groupList[[i]],groupList[[j]])
-                        if(inters){
-                                newGroupList[[i]] <- mergeGroup(groupList,i,j)
-                                newGroupList[[j]] <- NULL
-                                mergers = 1
-                        }
-                        else{
-                                newGroupList[[i]] <- groupList[[i]]
-                                newGroupList[[j]] <- groupList[[j]]
+generateData <- function(pop,density){
+        #generate data
+        a <- 1:pop
+        dev <- paste0("Dev",a)
+        user <- paste0("Usr",a)
+        set.seed(123)
+        dev <- sample(dev,density, replace=T)
+        user <- sample(user,density, replace=T)
+        data <<- data.frame(dev,user)
+        
+        groupList <- setHeap(data)
+}
+makeGroups <- function(groupList){
+        mergers <- 1
+        while (mergers > 0){
+                mergers = 0
+                for (i in 1:(length(groupList)-1)){
+                        if((i+1) <= length(groupList)){
+                                for (j in (i+1):length(groupList)){
+                                        first <- groupList[[i]]
+                                        second <- groupList[[j]]
+                                        inters <- intersection(first,second)
+                                        if(sum(inters) == 1){
+                                                groupList[[i]] <- mergeGroup(groupList,i,j)
+                                                groupList[[j]] <- NULL
+                                                mergers = 1
+                                                break
+                                        }
+                                }
+                        } else{break}
+                        if(mergers == 1){
+                                break
                         }
                 }
-        }
-        groupList <- newGroupList
+                
+        } 
+        groupList
 }
+
+
+
+data <- 0
+pop <- 100
+density <- 20
+groupList <- generateData(pop,density)
+newGroupList <- groupList
+a <- makeGroups(groupList)
